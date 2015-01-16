@@ -30,9 +30,9 @@ func New(username, password string) TextMagic {
 }
 
 func (t TextMagic) sendAPI(cmd string, params url.Values, data interface{}) error {
-	params.Add("username", t.username)
-	params.Add("password", t.password)
-	params.Add("cmd", cmd)
+	params.Set("username", t.username)
+	params.Set("password", t.password)
+	params.Set("cmd", cmd)
 	r, err := http.Get(apiURLPrefix + params.Encode())
 	if err != nil {
 		return RequestError{cmd, err}
