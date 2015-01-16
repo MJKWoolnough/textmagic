@@ -76,8 +76,6 @@ type Status struct {
 	Completed int64   `json:"completed_time"`
 }
 
-type messageStatuses map[int]Status
-
 func (t TextMagic) MessageStatus(ids ...uint) (map[uint]Status, error) {
 	statuses := make(map[uint]Status)
 	for len(ids) > 0 {
