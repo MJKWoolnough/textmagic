@@ -10,7 +10,7 @@ import (
 	"github.com/MJKWoolnough/memio"
 )
 
-var apiUrlPrefix = "https://www.textmagic.com/app/api?"
+var apiURLPrefix = "https://www.textmagic.com/app/api?"
 
 const (
 	cmdAccount       = "account"
@@ -33,7 +33,7 @@ func (t TextMagic) sendAPI(cmd string, params url.Values, data interface{}) erro
 	params.Add("username", t.username)
 	params.Add("password", t.password)
 	params.Add("cmd", cmd)
-	r, err := http.Get(apiUrlPrefix + params.Encode())
+	r, err := http.Get(apiURLPrefix + params.Encode())
 	if err != nil {
 		return RequestError{cmd, err}
 	}
