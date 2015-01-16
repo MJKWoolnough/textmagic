@@ -87,13 +87,7 @@ func (t TextMagic) MessageStatus(ids ...uint) (map[uint]Status, error) {
 			tIds = ids
 			ids = nil
 		}
-		var messageIds string
-		for _, id := range tIds {
-			if len(messageIds) > 0 {
-				messageIds += ","
-			}
-			messageIds += strconv.Itoa(int(id))
-		}
+		messageIds := joinUints(tIds...)
 		strStatuses := make(map[string]Status)
 		err := t.sendAPI(cmdMessageStatus, url.Values{"ids": {messageIds}}, strStatuses)
 		if err != nil {
@@ -108,6 +102,29 @@ func (t TextMagic) MessageStatus(ids ...uint) (map[uint]Status, error) {
 		}
 	}
 	return statuses, nil
+}
+
+const joinSep = ','
+
+func joinUints(u ...uint) string {
+	toStr := make([]byte, 0, 10*len(u))
+	var digits [21]byte
+	for n, num := range u {
+		if n > 0 {
+			toStr = append(toStr, joinSep)
+		}
+		if num == 0 {
+			toStr = append(toStr, '0')
+			continue
+		}
+		pos := 21
+		for ; num > 0; num /= 10 {
+			pos--
+			digits[pos] = '0' + byte(num%10)
+		}
+		toStr = append(toStr, digits[pos:]...)
+	}
+	return string(toStr)
 }
 
 // Errors
