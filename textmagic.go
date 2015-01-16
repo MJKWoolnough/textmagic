@@ -133,6 +133,24 @@ func (t TextMagic) DeleteReply(ids ...uint) ([]uint, error) {
 	return toRet, nil
 }
 
+type Message struct {
+	ID        uint   `json:"message_id"`
+	From      uint   `json:"from"`
+	Timestamp int64  `json:"timestamp"`
+	Text      string `json:"text"`
+}
+
+type received struct {
+	Messages []Message `json:"messages"`
+	Unread   uint      `json:"unread"`
+}
+
+func (t TextMagic) Receive(lastRetrieved uint) (uint, []Message, error) {
+	var r received
+	err := t.sendAPI(cmdReceive, url.Values{"last_retrieved_id": {strconv.Itoa(int(lastRetrieved))}}, &r)
+	return r.Unread, r.Messages, err
+}
+
 const joinSep = ','
 
 func joinUints(u ...uint) string {
