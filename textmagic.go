@@ -14,7 +14,11 @@ var apiUrlPrefix = "https://www.textmagic.com/app/api?"
 
 const (
 	cmdAccount       = "account"
+	cmdCheckNumber   = "check_number"
+	cmdDeleteReply   = "delete_reply"
 	cmdMessageStatus = "message_status"
+	cmdReceive       = "receive"
+	cmdSend          = "send"
 )
 
 type TextMagic struct {
