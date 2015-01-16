@@ -117,6 +117,22 @@ func (t TextMagic) CheckNumber(numbers ...uint) (map[uint]Number, error) {
 	return toRet, nil
 }
 
+type deleted struct {
+	Deleted []uint `json:"deleted"`
+}
+
+func (t TextMagic) DeleteReply(ids ...uint) ([]uint, error) {
+	toRet := make([]uint, 0, len(ids))
+	for _, tIds := range splitSlice(ids) {
+		var d deleted
+		if err := t.sendAPI(cmdDeleteReply, url.Values{"deleted": {joinUints(tIds...)}}, &d); err != nil {
+			return toRet, err
+		}
+		toRet = append(toRet, d.Deleted...)
+	}
+	return toRet, nil
+}
+
 const joinSep = ','
 
 func joinUints(u ...uint) string {
