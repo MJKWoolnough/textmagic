@@ -78,10 +78,10 @@ type Status struct {
 
 type messageStatuses map[int]Status
 
-func (t TextMagic) MessageStatus(ids ...int) (map[int]Status, error) {
-	statuses := make(map[int]Status)
+func (t TextMagic) MessageStatus(ids ...uint) (map[uint]Status, error) {
+	statuses := make(map[uint]Status)
 	for len(ids) > 0 {
-		var tIds []int
+		var tIds []uint
 		if len(ids) > 100 {
 			tIds = ids[:100]
 			ids = ids[100:]
@@ -94,7 +94,7 @@ func (t TextMagic) MessageStatus(ids ...int) (map[int]Status, error) {
 			if len(messageIds) > 0 {
 				messageIds += ","
 			}
-			messageIds += strconv.Itoa(id)
+			messageIds += strconv.Itoa(int(id))
 		}
 		strStatuses := make(map[string]Status)
 		err := t.sendAPI(cmdMessageStatus, url.Values{"ids": {messageIds}}, strStatuses)
@@ -106,7 +106,7 @@ func (t TextMagic) MessageStatus(ids ...int) (map[int]Status, error) {
 			if err != nil {
 				continue
 			}
-			statuses[id] = status
+			statuses[uint(id)] = status
 		}
 	}
 	return statuses, nil
