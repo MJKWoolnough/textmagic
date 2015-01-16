@@ -78,15 +78,7 @@ type Status struct {
 
 func (t TextMagic) MessageStatus(ids ...uint) (map[uint]Status, error) {
 	statuses := make(map[uint]Status)
-	for len(ids) > 0 {
-		var tIds []uint
-		if len(ids) > 100 {
-			tIds = ids[:100]
-			ids = ids[100:]
-		} else {
-			tIds = ids
-			ids = nil
-		}
+	for _, tIds := range splitSlice(ids) {
 		messageIds := joinUints(tIds...)
 		strStatuses := make(map[string]Status)
 		err := t.sendAPI(cmdMessageStatus, url.Values{"ids": {messageIds}}, strStatuses)
@@ -146,6 +138,20 @@ func joinUints(u ...uint) string {
 		toStr = append(toStr, digits[pos:]...)
 	}
 	return string(toStr)
+}
+
+const maxInSlice = 100
+
+func splitSlice(slice []uint) [][]uint {
+	toRet := make([][]uint, 0, len(slice)/maxInSlice+1)
+	for len(slice) > 100 {
+		toRet = append(toRet, slice[:100])
+		slice = slice[100:]
+	}
+	if len(slice) > 0 {
+		toRet = append(toRet, slice)
+	}
+	return toRet
 }
 
 // Errors
