@@ -104,6 +104,27 @@ func (t TextMagic) MessageStatus(ids ...uint) (map[uint]Status, error) {
 	return statuses, nil
 }
 
+type Number struct {
+	Price   float32 `json:"price"`
+	Country string  `json:"country"`
+}
+
+func (t TextMagic) CheckNumber(numbers ...uint) (map[uint]Number, error) {
+	ns := make(map[string]Number)
+	if err := t.sendAPI(cmdCheckNumber, url.Values{"phone": {joinUints(numbers...)}}, ns); err != nil {
+		return nil, err
+	}
+	toRet := make(map[uint]Number)
+	for n, data := range ns {
+		number, err := strconv.Atoi(n)
+		if err != nil {
+			continue
+		}
+		toRet[uint(number)] = data
+	}
+	return toRet, nil
+}
+
 const joinSep = ','
 
 func joinUints(u ...uint) string {
