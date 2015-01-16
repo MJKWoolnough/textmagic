@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/MJKWoolnough/memio"
 )
@@ -60,6 +61,51 @@ func (t TextMagic) Account() (float32, error) {
 		return 0, err
 	}
 	return b.Balance, nil
+}
+
+type Status struct {
+	Text      string  `json:"text"`
+	Status    string  `json:"status"`
+	Created   int64   `json:"created_time"`
+	Reply     string  `json:"reply_number"`
+	Cost      float32 `json:"credits_cost"`
+	Completed int64   `json:"completed_time"`
+}
+
+type messageStatuses map[int]Status
+
+func (t TextMagic) MessageStatus(ids ...int) (map[int]Status, error) {
+	statuses := make(map[int]Status)
+	for len(ids) > 0 {
+		var tIds []int
+		if len(ids) > 100 {
+			tIds = ids[:100]
+			ids = ids[100:]
+		} else {
+			tIds = ids
+			ids = nil
+		}
+		var messageIds string
+		for _, id := range tIds {
+			if len(messageIds) > 0 {
+				messageIds += ","
+			}
+			messageIds += strconv.Itoa(id)
+		}
+		strStatuses := make(map[string]Status)
+		err := t.sendAPI(cmdMessageStatus, url.Values{"ids": {messageIds}}, strStatuses)
+		if err != nil {
+			return statuses, err
+		}
+		for messageID, status := range strStatuses {
+			id, err := strconv.Atoi(messageID)
+			if err != nil {
+				continue
+			}
+			statuses[id] = status
+		}
+	}
+	return statuses, nil
 }
 
 // Errors
