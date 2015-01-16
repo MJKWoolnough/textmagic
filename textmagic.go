@@ -67,13 +67,51 @@ func (t TextMagic) Account() (float32, error) {
 	return b.Balance, nil
 }
 
+type DeliveryNotificationCode string
+
+func (d DeliveryNotificationCode) Status() string {
+	switch d {
+	case "q", "r", "a", "b", "s":
+		return "intermediate"
+	case "d", "f", "e", "j", "u":
+		return "final"
+	}
+	return "unknown"
+}
+
+func (d DeliveryNotificationCode) String() string {
+	switch d {
+	case "q":
+		return "The message is queued on the TextMagic server."
+	case "r":
+		return "The message has been sent to the mobile operator."
+	case "a":
+		return "The mobile operator has acknowledged the message."
+	case "b":
+		return "The mobile operator has queued the message."
+	case "d":
+		return "The message has been successfully delivered to the handset."
+	case "f":
+		return "An error occurred while delivering message."
+	case "e":
+		return "An error occurred while sending message."
+	case "j":
+		return "The mobile operator has rejected the message."
+	case "s":
+		return "This message is scheduled to be sent later."
+	default:
+		return "The status is unknown."
+
+	}
+}
+
 type Status struct {
-	Text      string  `json:"text"`
-	Status    string  `json:"status"`
-	Created   int64   `json:"created_time"`
-	Reply     string  `json:"reply_number"`
-	Cost      float32 `json:"credits_cost"`
-	Completed int64   `json:"completed_time"`
+	Text      string                   `json:"text"`
+	Status    DeliveryNotificationCode `json:"status"`
+	Created   int64                    `json:"created_time"`
+	Reply     string                   `json:"reply_number"`
+	Cost      float32                  `json:"credits_cost"`
+	Completed int64                    `json:"completed_time"`
 }
 
 func (t TextMagic) MessageStatus(ids ...uint) (map[uint]Status, error) {
