@@ -37,7 +37,7 @@ func (t TextMagic) sendAPI(cmd string, params url.Values, data interface{}) erro
 	if r.StatusCode != http.StatusOK {
 		return StatusError{cmd, r.StatusCode}
 	}
-	jsonData := make([]byte, r.ContentLength)
+	jsonData := make([]byte, r.ContentLength) // avoid allocation using io.Pipe?
 	var apiError APIError
 	err = json.NewDecoder(io.TeeReader(r.Body, memio.Create(&jsonData))).Decode(&apiError)
 	if err != nil {
