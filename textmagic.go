@@ -114,10 +114,10 @@ type Status struct {
 	Completed int64                    `json:"completed_time"`
 }
 
-func (t TextMagic) MessageStatus(ids ...uint) (map[uint]Status, error) {
+func (t TextMagic) MessageStatus(ids []uint) (map[uint]Status, error) {
 	statuses := make(map[uint]Status)
 	for _, tIds := range splitSlice(ids) {
-		messageIds := joinUints(tIds...)
+		messageIds := joinUints(tIds)
 		strStatuses := make(map[string]Status)
 		err := t.sendAPI(cmdMessageStatus, url.Values{"ids": {messageIds}}, strStatuses)
 		if err != nil {
@@ -139,9 +139,9 @@ type Number struct {
 	Country string  `json:"country"`
 }
 
-func (t TextMagic) CheckNumber(numbers ...uint) (map[uint]Number, error) {
+func (t TextMagic) CheckNumber(numbers []uint) (map[uint]Number, error) {
 	ns := make(map[string]Number)
-	if err := t.sendAPI(cmdCheckNumber, url.Values{"phone": {joinUints(numbers...)}}, ns); err != nil {
+	if err := t.sendAPI(cmdCheckNumber, url.Values{"phone": {joinUints(numbers)}}, ns); err != nil {
 		return nil, err
 	}
 	toRet := make(map[uint]Number)
@@ -159,11 +159,11 @@ type deleted struct {
 	Deleted []uint `json:"deleted"`
 }
 
-func (t TextMagic) DeleteReply(ids ...uint) ([]uint, error) {
+func (t TextMagic) DeleteReply(ids []uint) ([]uint, error) {
 	toRet := make([]uint, 0, len(ids))
 	for _, tIds := range splitSlice(ids) {
 		var d deleted
-		if err := t.sendAPI(cmdDeleteReply, url.Values{"deleted": {joinUints(tIds...)}}, &d); err != nil {
+		if err := t.sendAPI(cmdDeleteReply, url.Values{"deleted": {joinUints(tIds)}}, &d); err != nil {
 			return toRet, err
 		}
 		toRet = append(toRet, d.Deleted...)
@@ -191,7 +191,7 @@ func (t TextMagic) Receive(lastRetrieved uint) (uint, []Message, error) {
 
 const joinSep = ','
 
-func joinUints(u ...uint) string {
+func joinUints(u []uint) string {
 	toStr := make([]byte, 0, 10*len(u))
 	var digits [21]byte
 	for n, num := range u {
