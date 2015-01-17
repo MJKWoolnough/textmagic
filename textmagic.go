@@ -114,8 +114,8 @@ type Status struct {
 	Completed int64                    `json:"completed_time"`
 }
 
-func (t TextMagic) MessageStatus(ids []uint) (map[uint]Status, error) {
-	statuses := make(map[uint]Status)
+func (t TextMagic) MessageStatus(ids []uint64) (map[uint64]Status, error) {
+	statuses := make(map[uint64]Status)
 	for _, tIds := range splitSlice(ids) {
 		messageIds := joinUints(tIds)
 		strStatuses := make(map[string]Status)
@@ -128,7 +128,7 @@ func (t TextMagic) MessageStatus(ids []uint) (map[uint]Status, error) {
 			if err != nil {
 				continue
 			}
-			statuses[uint(id)] = status
+			statuses[uint64(id)] = status
 		}
 	}
 	return statuses, nil
@@ -139,28 +139,28 @@ type Number struct {
 	Country string  `json:"country"`
 }
 
-func (t TextMagic) CheckNumber(numbers []uint) (map[uint]Number, error) {
+func (t TextMagic) CheckNumber(numbers []uint64) (map[uint64]Number, error) {
 	ns := make(map[string]Number)
 	if err := t.sendAPI(cmdCheckNumber, url.Values{"phone": {joinUints(numbers)}}, ns); err != nil {
 		return nil, err
 	}
-	toRet := make(map[uint]Number)
+	toRet := make(map[uint64]Number)
 	for n, data := range ns {
 		number, err := strconv.Atoi(n)
 		if err != nil {
 			continue
 		}
-		toRet[uint(number)] = data
+		toRet[uint64(number)] = data
 	}
 	return toRet, nil
 }
 
 type deleted struct {
-	Deleted []uint `json:"deleted"`
+	Deleted []uint64 `json:"deleted"`
 }
 
-func (t TextMagic) DeleteReply(ids []uint) ([]uint, error) {
-	toRet := make([]uint, 0, len(ids))
+func (t TextMagic) DeleteReply(ids []uint64) ([]uint64, error) {
+	toRet := make([]uint64, 0, len(ids))
 	for _, tIds := range splitSlice(ids) {
 		var d deleted
 		if err := t.sendAPI(cmdDeleteReply, url.Values{"deleted": {joinUints(tIds)}}, &d); err != nil {
@@ -172,26 +172,30 @@ func (t TextMagic) DeleteReply(ids []uint) ([]uint, error) {
 }
 
 type Message struct {
-	ID        uint   `json:"message_id"`
-	From      uint   `json:"from"`
+	ID        uint64 `json:"message_id"`
+	From      uint64 `json:"from"`
 	Timestamp int64  `json:"timestamp"`
 	Text      string `json:"text"`
 }
 
 type received struct {
 	Messages []Message `json:"messages"`
-	Unread   uint      `json:"unread"`
+	Unread   uint64    `json:"unread"`
 }
 
-func (t TextMagic) Receive(lastRetrieved uint) (uint, []Message, error) {
+func (t TextMagic) Receive(lastRetrieved uint64) (uint64, []Message, error) {
 	var r received
 	err := t.sendAPI(cmdReceive, url.Values{"last_retrieved_id": {strconv.Itoa(int(lastRetrieved))}}, &r)
 	return r.Unread, r.Messages, err
 }
 
+func (t TextMagic) Send() {
+
+}
+
 const joinSep = ','
 
-func joinUints(u []uint) string {
+func joinUints(u []uint64) string {
 	toStr := make([]byte, 0, 10*len(u))
 	var digits [21]byte
 	for n, num := range u {
@@ -214,8 +218,8 @@ func joinUints(u []uint) string {
 
 const maxInSlice = 100
 
-func splitSlice(slice []uint) [][]uint {
-	toRet := make([][]uint, 0, len(slice)/maxInSlice+1)
+func splitSlice(slice []uint64) [][]uint64 {
+	toRet := make([][]uint64, 0, len(slice)/maxInSlice+1)
 	for len(slice) > 100 {
 		toRet = append(toRet, slice[:100])
 		slice = slice[100:]
