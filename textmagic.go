@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/MJKWoolnough/memio"
 )
@@ -124,11 +123,11 @@ func (t TextMagic) MessageStatus(ids []uint64) (map[uint64]Status, error) {
 			return statuses, err
 		}
 		for messageID, status := range strStatuses {
-			id, err := strconv.Atoi(messageID)
-			if err != nil {
+			id, isNum := stou(messageID)
+			if !isNum {
 				continue
 			}
-			statuses[uint64(id)] = status
+			statuses[id] = status
 		}
 	}
 	return statuses, nil
@@ -146,11 +145,11 @@ func (t TextMagic) CheckNumber(numbers []uint64) (map[uint64]Number, error) {
 	}
 	toRet := make(map[uint64]Number)
 	for n, data := range ns {
-		number, err := strconv.Atoi(n)
-		if err != nil {
+		number, isNum := stou(n)
+		if !isNum {
 			continue
 		}
-		toRet[uint64(number)] = data
+		toRet[number] = data
 	}
 	return toRet, nil
 }
@@ -185,7 +184,7 @@ type received struct {
 
 func (t TextMagic) Receive(lastRetrieved uint64) (uint64, []Message, error) {
 	var r received
-	err := t.sendAPI(cmdReceive, url.Values{"last_retrieved_id": {strconv.Itoa(int(lastRetrieved))}}, &r)
+	err := t.sendAPI(cmdReceive, url.Values{"last_retrieved_id": {utos(lastRetrieved)}}, &r)
 	return r.Unread, r.Messages, err
 }
 
@@ -228,6 +227,31 @@ func splitSlice(slice []uint64) [][]uint64 {
 		toRet = append(toRet, slice)
 	}
 	return toRet
+}
+
+func utos(num uint64) string {
+	if num == 0 {
+		return "0"
+	}
+	var digits [21]byte
+	pos := 21
+	for ; num > 0; num /= 10 {
+		pos--
+		digits[pos] = '0' + byte(num%10)
+	}
+	return string(digits[pos:])
+}
+
+func stou(str string) (uint64, bool) {
+	var num uint64
+	for _, c := range str {
+		if c > '9' || c < '0' {
+			return 0, false
+		}
+		num *= 10
+		num += uint64(c - '0')
+	}
+	return num, true
 }
 
 // Errors
