@@ -274,7 +274,7 @@ func joinUints(u []uint64) string {
 	return string(toStr)
 }
 
-const maxInSlice = 100
+var maxInSlice = 100
 
 func splitSlice(slice []uint64) [][]uint64 {
 	toRet := make([][]uint64, 0, len(slice)/maxInSlice+1)
