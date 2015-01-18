@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/MJKWoolnough/memio"
 )
@@ -188,8 +189,70 @@ func (t TextMagic) Receive(lastRetrieved uint64) (uint64, []Message, error) {
 	return r.Unread, r.Messages, err
 }
 
-func (t TextMagic) Send() {
+type option func(u url.Values)
 
+func From(from uint64) option {
+	return func(u url.Values) {
+		u.Set("from", utos(from))
+	}
+}
+
+func MaxLength(length uint64) option {
+	if length > 3 {
+		length = 3
+	}
+	return func(u url.Values) {
+		u.Set("max_length", utos(length))
+	}
+}
+
+func CutExtra() option {
+	return func(u url.Values) {
+		u.Set("cut_extra", "1")
+	}
+}
+
+func SendTime(t time.Time) option {
+	return func(u url.Values) {
+		u.Set("send_time", t.Format(time.RFC3339))
+	}
+}
+
+type messageResponse struct {
+	IDs   map[string]string `json:"message_id"`
+	Text  string            `json:"sent_text"`
+	Parts uint              `json:"parts_count"`
+}
+
+func (t TextMagic) Send(message string, to []uint64, options ...option) (map[string]uint64, string, uint, error) {
+	var (
+		params url.Values
+		text   string
+		parts  uint
+		ids    = make(map[string]uint64)
+	)
+	for _, o := range options {
+		o(params)
+	}
+	// check message for unicode/invalid chars
+	params.Set("text", message)
+	for _, numbers := range splitSlice(to) {
+		params.Set("phone", joinUints(numbers))
+		var m messageResponse
+		if err := t.sendAPI(cmdSend, params, &m); err != nil {
+			return ids, text, parts, err
+		}
+		if parts == 0 {
+			parts = m.Parts
+			text = m.Text
+		}
+		for id, number := range m.IDs {
+			if n, isNum := stou(number); isNum {
+				ids[id] = n
+			}
+		}
+	}
+	return ids, text, parts, nil
 }
 
 const joinSep = ','
