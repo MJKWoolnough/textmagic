@@ -278,9 +278,9 @@ const maxInSlice = 100
 
 func splitSlice(slice []uint64) [][]uint64 {
 	toRet := make([][]uint64, 0, len(slice)/maxInSlice+1)
-	for len(slice) > 100 {
-		toRet = append(toRet, slice[:100])
-		slice = slice[100:]
+	for len(slice) > maxInSlice {
+		toRet = append(toRet, slice[:maxInSlice])
+		slice = slice[maxInSlice:]
 	}
 	if len(slice) > 0 {
 		toRet = append(toRet, slice)
