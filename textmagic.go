@@ -227,11 +227,11 @@ func (t TextMagic) Send(message string, to []uint64, options ...option) (map[str
 		parts  uint
 		ids    = make(map[string]uint64)
 	)
+	// check message for unicode/invalid chars
+	params.Set("text", message)
 	for _, o := range options {
 		o(params)
 	}
-	// check message for unicode/invalid chars
-	params.Set("text", message)
 	for _, numbers := range splitSlice(to) {
 		params.Set("phone", joinUints(numbers))
 		var m messageResponse
