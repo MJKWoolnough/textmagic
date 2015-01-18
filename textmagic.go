@@ -124,11 +124,9 @@ func (t TextMagic) MessageStatus(ids []uint64) (map[uint64]Status, error) {
 			return statuses, err
 		}
 		for messageID, status := range strStatuses {
-			id, isNum := stou(messageID)
-			if !isNum {
-				continue
+			if id, isNum := stou(messageID); isNum {
+				statuses[id] = status
 			}
-			statuses[id] = status
 		}
 	}
 	return statuses, nil
@@ -145,12 +143,10 @@ func (t TextMagic) CheckNumber(numbers []uint64) (map[uint64]Number, error) {
 		return nil, err
 	}
 	toRet := make(map[uint64]Number)
-	for n, data := range ns {
-		number, isNum := stou(n)
-		if !isNum {
-			continue
+	for number, data := range ns {
+		if n, isNum := stou(number); isNum {
+			toRet[n] = data
 		}
-		toRet[number] = data
 	}
 	return toRet, nil
 }
