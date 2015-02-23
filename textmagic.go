@@ -21,10 +21,12 @@ const (
 	cmdSend          = "send"
 )
 
+// TextMagic contains the data necessary for performing API requests
 type TextMagic struct {
 	username, password string
 }
 
+// New constructs a new TextMagic session
 func New(username, password string) TextMagic {
 	return TextMagic{username, password}
 }
@@ -59,6 +61,7 @@ type balance struct {
 	Balance float32 `json:"balance"`
 }
 
+// Account returns the balance of the given TextMagic account
 func (t TextMagic) Account() (float32, error) {
 	var b balance
 	if err := t.sendAPI(cmdAccount, url.Values{}, &b); err != nil {
@@ -67,8 +70,10 @@ func (t TextMagic) Account() (float32, error) {
 	return b.Balance, nil
 }
 
+// DeliveryNotificationCode is a representation of the status of a delivery
 type DeliveryNotificationCode string
 
+// Status returns the type of status based on the code
 func (d DeliveryNotificationCode) Status() string {
 	switch d {
 	case "q", "r", "a", "b", "s":
@@ -105,6 +110,7 @@ func (d DeliveryNotificationCode) String() string {
 	}
 }
 
+// Status represents all of the information about a sent/pending message
 type Status struct {
 	Text      string                   `json:"text"`
 	Status    DeliveryNotificationCode `json:"status"`
@@ -114,6 +120,7 @@ type Status struct {
 	Completed int64                    `json:"completed_time"`
 }
 
+// MessageStatus gathers information about the messages with the given ids
 func (t TextMagic) MessageStatus(ids []uint64) (map[uint64]Status, error) {
 	statuses := make(map[uint64]Status)
 	for _, tIds := range splitSlice(ids) {
@@ -132,11 +139,13 @@ func (t TextMagic) MessageStatus(ids []uint64) (map[uint64]Status, error) {
 	return statuses, nil
 }
 
+// Number represents the information about a phone number
 type Number struct {
 	Price   float32 `json:"price"`
 	Country string  `json:"country"`
 }
 
+// CheckNumber is used to get the cost and country for the given phone numbers
 func (t TextMagic) CheckNumber(numbers []uint64) (map[uint64]Number, error) {
 	ns := make(map[string]Number)
 	if err := t.sendAPI(cmdCheckNumber, url.Values{"phone": {joinUints(numbers)}}, ns); err != nil {
@@ -155,6 +164,7 @@ type deleted struct {
 	Deleted []uint64 `json:"deleted"`
 }
 
+// DeleteReply will simple delete message replies with the given ids
 func (t TextMagic) DeleteReply(ids []uint64) ([]uint64, error) {
 	toRet := make([]uint64, 0, len(ids))
 	for _, tIds := range splitSlice(ids) {
@@ -167,6 +177,7 @@ func (t TextMagic) DeleteReply(ids []uint64) ([]uint64, error) {
 	return toRet, nil
 }
 
+// Message represents the information about a received message
 type Message struct {
 	ID        uint64 `json:"message_id"`
 	From      uint64 `json:"from"`
@@ -179,21 +190,26 @@ type received struct {
 	Unread   uint64    `json:"unread"`
 }
 
+// Receive will retrieve the number of unread messages and the 100 latest
+// replies
 func (t TextMagic) Receive(lastRetrieved uint64) (uint64, []Message, error) {
 	var r received
 	err := t.sendAPI(cmdReceive, url.Values{"last_retrieved_id": {utos(lastRetrieved)}}, &r)
 	return r.Unread, r.Messages, err
 }
 
-type option func(u url.Values)
+// Option is a type representing a message sending option
+type Option func(u url.Values)
 
-func From(from uint64) option {
+// From is an option to modify the sender of a message
+func From(from uint64) Option {
 	return func(u url.Values) {
 		u.Set("from", utos(from))
 	}
 }
 
-func MaxLength(length uint64) option {
+// MaxLength is an option to limit the length of a message
+func MaxLength(length uint64) Option {
 	if length > 3 {
 		length = 3
 	}
@@ -202,13 +218,16 @@ func MaxLength(length uint64) option {
 	}
 }
 
-func CutExtra() option {
+// CutExtra sets the option to automatically trim overlong messages
+func CutExtra() Option {
 	return func(u url.Values) {
 		u.Set("cut_extra", "1")
 	}
 }
 
-func SendTime(t time.Time) option {
+// SendTime sets the option to schedule the sending of a message for a specific
+// time
+func SendTime(t time.Time) Option {
 	return func(u url.Values) {
 		u.Set("send_time", t.Format(time.RFC3339))
 	}
@@ -220,7 +239,9 @@ type messageResponse struct {
 	Parts uint              `json:"parts_count"`
 }
 
-func (t TextMagic) Send(message string, to []uint64, options ...option) (map[string]uint64, string, uint, error) {
+// Send will send a message to the given recipients. It takes options to modify
+// the scheduling. sender and length of the message
+func (t TextMagic) Send(message string, to []uint64, options ...Option) (map[string]uint64, string, uint, error) {
 	var (
 		params url.Values
 		text   string
@@ -253,6 +274,8 @@ func (t TextMagic) Send(message string, to []uint64, options ...option) (map[str
 
 // Errors
 
+// APIError is an error returned when the incorrect or unexpected data is
+// received
 type APIError struct {
 	Cmd     string
 	Code    int    `json:"error_code"`
@@ -263,6 +286,8 @@ func (a APIError) Error() string {
 	return "command " + a.Cmd + " returned the following API error: " + a.Message
 }
 
+// RequestError is an error which wraps an error that occurs while making an
+// API call
 type RequestError struct {
 	Cmd string
 	Err error
@@ -272,6 +297,8 @@ func (r RequestError) Error() string {
 	return "command " + r.Cmd + " returned the following error while makeing the API call: " + r.Err.Error()
 }
 
+// StatusError is an error that is returned when a non-200 OK http response is
+// received
 type StatusError struct {
 	Cmd        string
 	StatusCode int
@@ -281,6 +308,7 @@ func (s StatusError) Error() string {
 	return "command " + s.Cmd + " returned a non-200 OK response: " + http.StatusText(s.StatusCode)
 }
 
+// JSONError is an error that wraps a JSON error
 type JSONError struct {
 	Cmd string
 	Err error
