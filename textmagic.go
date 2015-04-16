@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/MJKWoolnough/memio"
@@ -120,20 +121,20 @@ type Status struct {
 	Completed int64                    `json:"completed_time"`
 }
 
+const joinSep = ","
+
 // MessageStatus gathers information about the messages with the given ids
-func (t TextMagic) MessageStatus(ids []uint64) (map[uint64]Status, error) {
-	statuses := make(map[uint64]Status)
+func (t TextMagic) MessageStatus(ids []string) (map[string]Status, error) {
+	statuses := make(map[string]Status)
 	for _, tIds := range splitSlice(ids) {
-		messageIds := joinUints(tIds)
+		messageIds := strings.Join(tIds, joinSep)
 		strStatuses := make(map[string]Status)
 		err := t.sendAPI(cmdMessageStatus, url.Values{"ids": {messageIds}}, strStatuses)
 		if err != nil {
 			return statuses, err
 		}
 		for messageID, status := range strStatuses {
-			if id, isNum := stou(messageID); isNum {
-				statuses[id] = status
-			}
+			statuses[messageID] = status
 		}
 	}
 	return statuses, nil
@@ -146,30 +147,24 @@ type Number struct {
 }
 
 // CheckNumber is used to get the cost and country for the given phone numbers
-func (t TextMagic) CheckNumber(numbers []uint64) (map[uint64]Number, error) {
+func (t TextMagic) CheckNumber(numbers []string) (map[string]Number, error) {
 	ns := make(map[string]Number)
-	if err := t.sendAPI(cmdCheckNumber, url.Values{"phone": {joinUints(numbers)}}, ns); err != nil {
+	if err := t.sendAPI(cmdCheckNumber, url.Values{"phone": {strings.Join(numbers, joinSep)}}, ns); err != nil {
 		return nil, err
 	}
-	toRet := make(map[uint64]Number)
-	for number, data := range ns {
-		if n, isNum := stou(number); isNum {
-			toRet[n] = data
-		}
-	}
-	return toRet, nil
+	return ns, nil
 }
 
 type deleted struct {
-	Deleted []uint64 `json:"deleted"`
+	Deleted []string `json:"deleted"`
 }
 
 // DeleteReply will simple delete message replies with the given ids
-func (t TextMagic) DeleteReply(ids []uint64) ([]uint64, error) {
-	toRet := make([]uint64, 0, len(ids))
+func (t TextMagic) DeleteReply(ids []string) ([]string, error) {
+	toRet := make([]string, 0, len(ids))
 	for _, tIds := range splitSlice(ids) {
 		var d deleted
-		if err := t.sendAPI(cmdDeleteReply, url.Values{"deleted": {joinUints(tIds)}}, &d); err != nil {
+		if err := t.sendAPI(cmdDeleteReply, url.Values{"deleted": {strings.Join(tIds, joinSep)}}, &d); err != nil {
 			return toRet, err
 		}
 		toRet = append(toRet, d.Deleted...)
@@ -180,7 +175,7 @@ func (t TextMagic) DeleteReply(ids []uint64) ([]uint64, error) {
 // Message represents the information about a received message
 type Message struct {
 	ID        uint64 `json:"message_id"`
-	From      uint64 `json:"from"`
+	From      string `json:"from"`
 	Timestamp int64  `json:"timestamp"`
 	Text      string `json:"text"`
 }
@@ -202,9 +197,9 @@ func (t TextMagic) Receive(lastRetrieved uint64) (uint64, []Message, error) {
 type Option func(u url.Values)
 
 // From is an option to modify the sender of a message
-func From(from uint64) Option {
+func From(from string) Option {
 	return func(u url.Values) {
-		u.Set("from", utos(from))
+		u.Set("from", from)
 	}
 }
 
@@ -241,12 +236,12 @@ type messageResponse struct {
 
 // Send will send a message to the given recipients. It takes options to modify
 // the scheduling. sender and length of the message
-func (t TextMagic) Send(message string, to []uint64, options ...Option) (map[string]uint64, string, uint, error) {
+func (t TextMagic) Send(message string, to []string, options ...Option) (map[string]string, string, uint, error) {
 	var (
 		params url.Values
 		text   string
 		parts  uint
-		ids    = make(map[string]uint64)
+		ids    = make(map[string]string)
 	)
 	// check message for unicode/invalid chars
 	params.Set("text", message)
@@ -254,7 +249,7 @@ func (t TextMagic) Send(message string, to []uint64, options ...Option) (map[str
 		o(params)
 	}
 	for _, numbers := range splitSlice(to) {
-		params.Set("phone", joinUints(numbers))
+		params.Set("phone", strings.Join(numbers, joinSep))
 		var m messageResponse
 		if err := t.sendAPI(cmdSend, params, &m); err != nil {
 			return ids, text, parts, err
@@ -264,9 +259,7 @@ func (t TextMagic) Send(message string, to []uint64, options ...Option) (map[str
 			text = m.Text
 		}
 		for id, number := range m.IDs {
-			if n, isNum := stou(number); isNum {
-				ids[id] = n
-			}
+			ids[id] = number
 		}
 	}
 	return ids, text, parts, nil
