@@ -46,7 +46,7 @@ func (t TextMagic) sendAPI(cmd string, params url.Values, data interface{}) erro
 	}
 	cL := r.ContentLength
 	if cL < 0 {
-		cL = 0
+		cL = 1024
 	}
 	jsonData := make([]byte, 0, cL) // avoid allocation using io.Pipe?
 	var apiError APIError
