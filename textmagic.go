@@ -44,7 +44,11 @@ func (t TextMagic) sendAPI(cmd string, params url.Values, data interface{}) erro
 	if r.StatusCode != http.StatusOK {
 		return StatusError{cmd, r.StatusCode}
 	}
-	jsonData := make([]byte, r.ContentLength) // avoid allocation using io.Pipe?
+	cL := r.ContentLength
+	if cL < 0 {
+		cL = 0
+	}
+	jsonData := make([]byte, 0, cL) // avoid allocation using io.Pipe?
 	var apiError APIError
 	err = json.NewDecoder(io.TeeReader(r.Body, memio.Create(&jsonData))).Decode(&apiError)
 	if err != nil {
@@ -238,7 +242,7 @@ type messageResponse struct {
 // the scheduling. sender and length of the message
 func (t TextMagic) Send(message string, to []string, options ...Option) (map[string]string, string, uint, error) {
 	var (
-		params url.Values
+		params = url.Values{}
 		text   string
 		parts  uint
 		ids    = make(map[string]string)
