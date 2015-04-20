@@ -253,7 +253,7 @@ func (t TextMagic) Send(message string, to []string, options ...Option) (map[str
 		o(params)
 	}
 	for _, numbers := range splitSlice(to) {
-		params.Set("phone", strings.Join(numbers, joinSep))
+		params.Set("phone_number", strings.Join(numbers, joinSep))
 		var m messageResponse
 		if err := t.sendAPI(cmdSend, params, &m); err != nil {
 			return ids, text, parts, err
