@@ -249,11 +249,12 @@ func (t TextMagic) Send(message string, to []string, options ...Option) (map[str
 	)
 	// check message for unicode/invalid chars
 	params.Set("text", message)
+	params.Set("unicode", "0")
 	for _, o := range options {
 		o(params)
 	}
 	for _, numbers := range splitSlice(to) {
-		params.Set("phone_number", strings.Join(numbers, joinSep))
+		params.Set("phone", strings.Join(numbers, joinSep))
 		var m messageResponse
 		if err := t.sendAPI(cmdSend, params, &m); err != nil {
 			return ids, text, parts, err
