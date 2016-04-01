@@ -1,3 +1,4 @@
+// Package textmagic wraps the API for textmagic.com
 package textmagic
 
 import (
