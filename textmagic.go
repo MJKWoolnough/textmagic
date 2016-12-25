@@ -49,9 +49,9 @@ func (t TextMagic) sendAPI(cmd string, params url.Values, data interface{}) erro
 	if cL < 0 {
 		cL = 1024
 	}
-	jsonData := make([]byte, 0, cL) // avoid allocation using io.Pipe?
+	jsonData := make(memio.Buffer, 0, cL) // avoid allocation using io.Pipe?
 	var apiError APIError
-	err = json.NewDecoder(io.TeeReader(r.Body, memio.Create(&jsonData))).Decode(&apiError)
+	err = json.NewDecoder(io.TeeReader(r.Body, &jsonData)).Decode(&apiError)
 	if err != nil {
 		return JSONError{cmd, err}
 	}
