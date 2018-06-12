@@ -1,5 +1,5 @@
 // Package textmagic wraps the API for textmagic.com
-package textmagic
+package textmagic // import "vimagination.zapto.org/textmagic"
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MJKWoolnough/memio"
+	"vimagination.zapto.org/memio"
 )
 
 var apiURLPrefix = "https://www.textmagic.com/app/api?"
