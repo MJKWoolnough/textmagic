@@ -59,8 +59,7 @@ func (t TextMagic) sendAPI(cmd string, params url.Values, data interface{}) erro
 		apiError.Cmd = cmd
 		return apiError
 	}
-	json.Unmarshal(jsonData, data)
-	return nil
+	return json.Unmarshal(jsonData, data)
 }
 
 type balance struct {
