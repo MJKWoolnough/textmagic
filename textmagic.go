@@ -324,7 +324,7 @@ type RequestError struct {
 }
 
 func (r RequestError) Error() string {
-	return "command " + r.Cmd + " returned the following error while makeing the API call: " + r.Err.Error()
+	return "command " + r.Cmd + " returned the following error while making the API call: " + r.Err.Error()
 }
 
 // StatusError is an error that is returned when a non-200 OK http response is
