@@ -231,4 +231,4 @@ Receive will retrieve the number of unread messages and the 100 latest replies.
 func (t TextMagic) Send(message string, to []string, options ...Option) (map[string]string, string, uint, error)
 ```
 Send will send a message to the given recipients. It takes options to modify the
-scheduling. sender and length of the message.
+scheduling, sender and length of the message.
