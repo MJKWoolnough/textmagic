@@ -263,7 +263,7 @@ type messageResponse struct {
 }
 
 // Send will send a message to the given recipients. It takes options to modify
-// the scheduling. sender and length of the message.
+// the scheduling, sender and length of the message.
 func (t TextMagic) Send(message string, to []string, options ...Option) (map[string]string, string, uint, error) {
 	var (
 		params = url.Values{}
