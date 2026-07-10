@@ -33,7 +33,7 @@ func New(username, password string) TextMagic {
 	return TextMagic{username, password}
 }
 
-func (t TextMagic) sendAPI(cmd string, params url.Values, data interface{}) error {
+func (t TextMagic) sendAPI(cmd string, params url.Values, data any) error {
 	params.Set("username", t.username)
 	params.Set("password", t.password)
 	params.Set("cmd", cmd)
